@@ -14,10 +14,11 @@ app.MapGet("/", () =>
     // Read values from configuration (env vars override appsettings.json)
     var environment = configuration["Environment"];
     var connectionString = configuration["Database:ConnectionString"];
+    
 
     var html = "<h1>Configured Environment Variables</h1><ul>";
-    html += $"<li><b>Environment</b>: {environment}</li>";
-    html += $"<li><b>Database:ConnectionString</b>: {connectionString}</li>";
+    html += $"<li>Environment: {environment}</li>";
+    html += $"<li>Database:ConnectionString: {connectionString}</li>";
     html += "</ul>";
 
     return Results.Content(html, "text/html");
