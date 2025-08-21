@@ -4,22 +4,29 @@ using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// appsettings.json is loaded by default, and Docker env vars automatically override matching keys
-var configuration = builder.Configuration;
+// Load JSON configs based on ASPNETCORE_ENVIRONMENT
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables(); // this ensures docker -e overrides JSON
 
 var app = builder.Build();
 
 app.MapGet("/", () =>
 {
-    // Read values from configuration (env vars override appsettings.json)
-    var environment = configuration["Environment"];
-    var connectionString = configuration["Database:ConnectionString"];
-    
-
-    var html = "<h1>Configured Environment Variables</h1><ul>";
-    html += $"<li>Environment: {environment}</li>";
-    html += $"<li>Database:ConnectionString: {connectionString}</li>";
+    var html = "<h1>Environment Variables</h1><ul>";
+    foreach (var key in Environment.GetEnvironmentVariables().Keys)
+    {
+        var k = key?.ToString() ?? "";
+        var val = Environment.GetEnvironmentVariable(k) ?? "";
+        html += $"<li><b>{k}</b>: {val}</li>";
+    }
     html += "</ul>";
+
+    // Value will come from JSON, or override from docker -e
+    var environmentValue = app.Configuration["Environment"] ?? "Not Found";
+    html += $"<h2>AppSettings Environment: {environmentValue}</h2>";
 
     return Results.Content(html, "text/html");
 });
